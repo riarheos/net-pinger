@@ -94,7 +94,7 @@ func (p *Pinger) Ping() error {
 		return errors.New("invalid echo reply body")
 	}
 
-	if body.Seq != p.seq || body.ID != p.pid {
+	if body.Seq != p.seq {
 		return errors.New("invalid echo reply contents")
 	}
 

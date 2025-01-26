@@ -1,0 +1,16 @@
+[Unit]
+Description=net-pinger
+After=network.target
+After=bird.service
+Requires=bird.service
+
+[Service]
+Type=simple
+User=bird
+Group=bird
+
+ExecStart=/usr/bin/net-pinger -a 158.160.51.127 -g "birdc enable twokom" -b "birdc disable twokom"
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target
