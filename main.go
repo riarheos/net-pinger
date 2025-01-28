@@ -1,17 +1,8 @@
 package main
 
-import (
-	"errors"
-	"fmt"
-	"github.com/spf13/pflag"
-	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv4"
-	"net"
-	"os"
-	"os/exec"
-	"time"
-)
+import "net-pinger/src"
 
+/*
 type PingerConfig struct {
 	address     string
 	sleepDelay  time.Duration
@@ -71,34 +62,46 @@ func (p *Pinger) Ping() error {
 		return err
 	}
 	rb := make([]byte, 1500)
-	n, peer, err := p.conn.ReadFrom(rb)
-	if err != nil {
-		return err
-	}
 
-	if peer.String() != p.addr.String() {
-		return errors.New("peer address mismatch")
-	}
+	for {
+		n, peer, err := p.conn.ReadFrom(rb)
+		if err != nil {
+			return err
+		}
 
-	rm, err := icmp.ParseMessage(1, rb[:n])
-	if err != nil {
-		return err
-	}
+		if peer.String() != p.addr.String() {
+			fmt.Printf("PING 1 %s\n", p.addr.String())
+			//return errors.New("peer address mismatch")
+			continue
+		}
 
-	if rm.Type != ipv4.ICMPTypeEchoReply {
-		return errors.New("invalid echo reply")
-	}
+		rm, err := icmp.ParseMessage(1, rb[:n])
+		if err != nil {
+			return err
+		}
 
-	body, ok := rm.Body.(*icmp.Echo)
-	if !ok {
-		return errors.New("invalid echo reply body")
-	}
+		if rm.Type != ipv4.ICMPTypeEchoReply {
+			fmt.Printf("PING 2 %s\n", p.addr.String())
+			//return errors.New("invalid echo reply")
+			continue
+		}
 
-	if body.Seq != p.seq {
-		return errors.New("invalid echo reply contents")
-	}
+		body, ok := rm.Body.(*icmp.Echo)
+		if !ok {
+			fmt.Printf("PING 3 %s\n", p.addr.String())
+			//return errors.New("invalid echo reply body")
+			continue
+		}
 
-	return nil
+		if body.Seq != p.seq || body.ID != p.pid {
+			fmt.Printf("PING 4 %s\n", p.addr.String())
+			//return errors.New("invalid echo reply contents")
+			continue
+		}
+
+		fmt.Printf("PING 5 %s\n", p.addr.String())
+		return nil
+	}
 }
 
 func (p *Pinger) RunCommand(command string) {
@@ -137,35 +140,47 @@ func (p *Pinger) Run() error {
 func (p *Pinger) Close() {
 	_ = p.conn.Close()
 }
+*/
 
 func main() {
-	addr := pflag.StringP("address", "a", "", "address to ping")
-	timeout := pflag.DurationP("timeout", "t", time.Second, "ping wait timeout")
-	delay := pflag.DurationP("delay", "d", 5*time.Second, "ping delay")
-	failCount := pflag.IntP("fail", "f", 3, "fail count")
-	good := pflag.StringP("good", "g", "", "action to run on good")
-	bad := pflag.StringP("bad", "b", "", "action to run on bad")
+	/*
+		addr := pflag.StringP("address", "a", "", "address to ping")
+		timeout := pflag.DurationP("timeout", "t", time.Second, "ping wait timeout")
+		delay := pflag.DurationP("delay", "d", 5*time.Second, "ping delay")
+		failCount := pflag.IntP("fail", "f", 3, "fail count")
+		good := pflag.StringP("good", "g", "", "action to run on good")
+		bad := pflag.StringP("bad", "b", "", "action to run on bad")
 
-	pflag.Parse()
+		pflag.Parse()
 
-	if *addr == "" || *timeout == 0 || *delay == 0 || *good == "" || *bad == "" {
-		pflag.Usage()
-		os.Exit(1)
-	}
+		if *addr == "" || *timeout == 0 || *delay == 0 || *good == "" || *bad == "" {
+			pflag.Usage()
+			os.Exit(1)
+		}
 
-	p, err := NewPinger(&PingerConfig{
-		address:     *addr,
-		sleepDelay:  *delay,
-		waitTimeout: *timeout,
-		failCount:   *failCount,
-		good:        *good,
-		bad:         *bad,
-	})
+		p, err := NewPinger(&PingerConfig{
+			address:     *addr,
+			sleepDelay:  *delay,
+			waitTimeout: *timeout,
+			failCount:   *failCount,
+			good:        *good,
+			bad:         *bad,
+		})
+		if err != nil {
+			panic(err)
+		}
+
+		if err = p.Run(); err != nil {
+			panic(err)
+		}
+	*/
+	p, err := src.NewPingFromCommandLine()
 	if err != nil {
 		panic(err)
 	}
 
-	if err = p.Run(); err != nil {
+	err = p.Run()
+	if err != nil {
 		panic(err)
 	}
 }

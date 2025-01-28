@@ -9,7 +9,7 @@ Type=simple
 User=bird
 Group=bird
 
-ExecStart=/usr/bin/net-pinger -a 158.160.51.127 -g "birdc enable twokom" -b "birdc disable twokom"
+ExecStart=/usr/bin/net-pinger -a "birdc enable provider1" -d "birdc disable provider1" 8.8.8.8
 TimeoutSec=300
 
 [Install]
