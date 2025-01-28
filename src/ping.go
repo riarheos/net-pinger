@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"runtime"
 	"time"
 )
 
@@ -50,6 +51,14 @@ func NewPingFromCommandLine() (*Ping, error) {
 		return nil, err
 	}
 
+	// linux assigns local "port" to the id of the packets, need to account for that
+	if runtime.GOOS == "linux" {
+		addr := p.conn.IPv4PacketConn().LocalAddr().(*net.UDPAddr)
+		p.pid = uint16(addr.Port)
+	} else {
+		p.pid = uint16(os.Getpid())
+	}
+
 	p.send = make(map[string]*remoteInfo)
 	for _, ip := range p.ips {
 		addr := &net.UDPAddr{IP: ip}
@@ -60,8 +69,6 @@ func NewPingFromCommandLine() (*Ping, error) {
 			pingsInState: 0,
 		}
 	}
-
-	p.pid = uint16(os.Getpid())
 
 	if p.groupAlive == 0 {
 		p.groupAlive = uint8(len(p.ips))
