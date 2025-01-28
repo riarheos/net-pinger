@@ -17,6 +17,7 @@ type remoteInfo struct {
 	ip           net.IP
 	addr         net.Addr
 	isUp         bool
+	stableIsUp   bool
 	pingsInState int
 	gotReply     bool
 }
@@ -139,8 +140,9 @@ func (p *Ping) gatherResponses(recv chan icmpInfo) {
 					}
 					p.log.Debug("Ping timed out", zap.String("ip", ip), zap.Int("count", v.pingsInState))
 
-					if v.pingsInState == int(p.deadCount) {
+					if v.pingsInState == int(p.deadCount) && v.stableIsUp {
 						p.log.Info("Remote host is dead", zap.String("ip", ip))
+						v.stableIsUp = false
 						p.handleHostDead()
 					}
 				}
@@ -164,8 +166,9 @@ func (p *Ping) gatherResponses(recv chan icmpInfo) {
 
 			p.log.Debug("Successful ping", zap.String("ip", s), zap.Int("count", v.pingsInState))
 
-			if v.pingsInState == int(p.aliveCount) {
+			if v.pingsInState == int(p.aliveCount) && !v.stableIsUp {
 				p.log.Info("Remote host is alive", zap.String("ip", s))
+				v.stableIsUp = true
 				p.handleHostAlive()
 			}
 		}
